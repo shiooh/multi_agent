@@ -1,11 +1,6 @@
-import os
 import numpy as np
 import random
-import matplotlib
-matplotlib.use('Agg')
-import matplotlib.pyplot as plt
-import matplotlib.animation as animation
-from matplotlib.patches import FancyArrowPatch
+
 from enum import IntEnum, auto
 from depth.model.DepthEucl import DepthEucl
 
@@ -43,8 +38,10 @@ class Agent:
     def update_position(self, other_agents_positions):
         if self.agent_type == AgentType.ADVERSAL:
             self._move_as_adversal(other_agents_positions)
-        else:
+        elif self.agent_type == AgentType.NOMAL:
             self._move_as_nomal(other_agents_positions)
+        else:
+            raise ValueError("Unexpected Agent Type")
 
 
 class SimulationPlatform:
@@ -91,19 +88,25 @@ class SimulationPlatform:
 
     # agents の移動の様子を可視化. 2次元にのみ対応している
     def _visualize(self):
-        ##TODO: グラフがなんか変
-        assert self.dimension == 2
-        visualizer()
+        if self.dimension != 2:
+            raise ValueError("Dimension has to be 2 to visualize")
+        all_agents_history = [agent.position_history for agent in self.agents]
+        nomal_agents_history = [agent.position_history for agent in self.agents if agent.agent_type == AgentType.NOMAL]
+        adversal_agents_history = [agent.position_history for agent in self.agents if agent.agent_type == AgentType.ADVERSAL]
+
+        visualizer(all_agents_history = all_agents_history, nomal_agents_history = nomal_agents_history, adversal_agents_history = adversal_agents_history, visible_graph = self.visible_graph)
 
     def simulate(self, update_times):
         for t in range(update_times):
             self._update_agents(t)
             if self._has_got_agreement():
+                print("Acheaved agreement!")
                 break
         
         self._visualize()
 
 
 if __name__ == "__main__":
+    print("Simulating ... ")
     simulation_platform = SimulationPlatform(dimension=2, N=10, F=2)
     simulation_platform.simulate(update_times=50)

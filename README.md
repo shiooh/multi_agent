@@ -1,4 +1,4 @@
-# シミュレーション
+# Multi Agent の更新アルゴリズムのシミュレーション
 
 ## Turkey's Hyperplane
 
@@ -20,7 +20,8 @@
 
 <video src="out/visualizer_ver3.mp4" controls="true" width="300"></video>
 
-- ビジュアライザーを改良(ver4)
+## Center point
+- 知っている（自分を含む）点の集合に対し. 各点のTukey深度を計算し, 最も深い点に移動する. グラフは全域有効木を含むランダムなグラフとした.
 
 結果：
 
