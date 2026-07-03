@@ -1,14 +1,36 @@
 import random
 import networkx as nx
+import numpy as np
 
-def generate_random_adjacency_list(n_vertices, n_edges):
+def generate_random_strongly_connected_graph(n_vertices, n_edges):
+
+    G = nx.DiGraph()
+    G.add_nodes_from(range(n_vertices))
+
+    # 有向サイクルをグラフに追加
+    arr = np.arange(n_vertices)
+    np.random.shuffle(arr)
+    G.add_cycle(arr)
+
+    # 残りの辺はランダムに追加
+    all_possible_edges = [(u, v) for u in range(n_vertices) for v in range(n_vertices) if u != v]
+    current_edges = set(G.edges())
+    candidate_edges = [edge for edge in all_possible_edges if edge not in current_edges]
+    choosen_edges = random.sample(candidate_edges, 3)
+    G.add_edges_from(choosen_edges)
+
+    # TODO: 一旦可視化、そのあと、強連結性を保証しながらランダムに入れ替える
+
+
+# 頂点数 n_vertices, 辺の数 n_edges の、全域有向木を含む有向グラフをランダムに生成 計算量: O(V^2)
+def generate_random_graph_with_spanning_arborescence(n_vertices, n_edges):
     if n_edges < n_vertices - 1:
-        raise ValueError("辺の数は (頂点数 - 1) 以上である必要があります。")
+        raise ValueError("|E| have to be more than (|V| - 1)")
         
     G = nx.DiGraph()
     G.add_nodes_from(range(n_vertices))
     
-    # 1. 骨組みとなる全域木
+    # 1. 骨組みとなる全域木を生成
     for i in range(1, n_vertices):
         parent = random.randint(0, i - 1)
         G.add_edge(parent, i)
@@ -32,10 +54,12 @@ def generate_random_adjacency_list(n_vertices, n_edges):
     adj_dict = nx.to_dict_of_lists(final_graph)
     
     return adj_dict
-    
-def generate_random_complite_graph(n_vertices):
+
+# 頂点数 n_vertices の完全グラフを生成
+def generate_complite_graph(n_vertices):
     visible_graph =  [[] for _ in range(n_vertices)]
     for i in range(n_vertices):
         for j in range(n_vertices):
             if i is not j:
                 visible_graph[i].append(j)
+    return visible_graph
