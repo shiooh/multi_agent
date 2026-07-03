@@ -1,8 +1,29 @@
 import numpy as np
 import random
+from depth.model.DepthEucl import DepthEucl
 
-def update_by_turkey_hyperplane(self_position, other_agents_positions, cur_time, F, dimension, find_best_nomal, diminish_step_length = False):
-    if find_best_nomal:
+#
+#-----------------------   Center Point Algorism ----------------------- #
+#
+
+def go_to_center_point(weight, self_position, other_agents_positions, F):
+    # TODO: もっといいアルゴリズムに
+    other_agents_positions = np.array(other_agents_positions)
+
+    model=DepthEucl().load_dataset(other_agents_positions)
+    depths = model.halfspace(other_agents_positions, exact=True)
+
+    center_idx = depths.argmax()
+    centerpoint = other_agents_positions[center_idx]
+
+    return weight * self_position + (1 - weight) * centerpoint.copy()
+
+#
+#-----------------------   Turley's Hyperplane Algorism ----------------------- #
+#
+
+def update_by_turkey_hyperplane(self_position, other_agents_positions, cur_time, F, dimension, find_best, diminish_step_length = False):
+    if find_best:
         nomal_vector = best_nomal_of_hyperplane(
             self_position = self_position,
             other_agents_positions = other_agents_positions,
@@ -76,9 +97,10 @@ def calc_signed_side_count_difference(nomal_vector, self_position, other_agents_
     nodes_on_positive_side = 0  # hyperplane の nomal_vector 側にある agent の数
     nodes_on_negative_side = 0  # hyperplane の nomal_vector と逆側にある agent の数
     for other_position in other_agents_positions:
-        if nomal_vector @ (other_position - self_position) > 0:
+        inner_product = nomal_vector @ (other_position - self_position)
+        if inner_product > 0:
             nodes_on_positive_side += 1
-        else:
+        elif inner_product < 0:
             nodes_on_negative_side += 1
     side_count_diff = nodes_on_positive_side - nodes_on_negative_side
     return side_count_diff

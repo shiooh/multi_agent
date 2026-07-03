@@ -1,9 +1,6 @@
 import numpy as np
 import random
-import matplotlib
-matplotlib.use('Agg')
-import matplotlib.pyplot as plt
-import matplotlib.animation as animation
+
 from enum import IntEnum, auto
 from utils.graph_generator import *
 from utils.visualizer import visualizer
@@ -28,14 +25,21 @@ class Agent:
     def _move_as_nomal(self, other_agents_positions):
 
         # ver1 ~ ver3
-        next_position = update_by_turkey_hyperplane(
+        # next_position = update_by_turkey_hyperplane(
+        #     self_position = self.position_history[-1],
+        #     other_agents_positions = other_agents_positions,
+        #     cur_time = self.cur_time,
+        #     F = self.F,
+        #     dimension = self.dimension,
+        #     find_best = True,     # ver1: False, ver2~ : True
+        #     diminish_step_length = True     # ver1,2: False, ver3: True
+        # )
+
+        next_position = go_to_center_point(
+            weight = 0.7,
             self_position = self.position_history[-1],
             other_agents_positions = other_agents_positions,
-            cur_time = self.cur_time,
             F = self.F,
-            dimension = self.dimension,
-            find_best_nomal = True,     # ver1: False, ver2~ : True
-            diminish_step_length = True     # ver1,2: False, ver3: True
         )
         
         self.position_history.append(next_position)
@@ -45,9 +49,12 @@ class Agent:
         self.cur_time += 1
         if self.agent_type == AgentType.ADVERSAL:
             self._move_as_adversal(other_agents_positions)
-        else:
+        elif self.agent_type == AgentType.NOMAL:
             self._move_as_nomal(other_agents_positions)
-        
+        else:
+            raise ValueError("Unexpected Agent Type")
+
+
 class SimulationPlatform:
     def __init__(self, dimension, N, F, epsilon):
         self.dimension = dimension
@@ -59,6 +66,7 @@ class SimulationPlatform:
         self.visible_graph = [[] for _ in range(N)]
         self._initialize_visible_graph()
 
+    # 可視グラフをランダムに生成
     def _initialize_visible_graph(self):
         self.visible_graph = generate_complite_graph(self.N)
 
@@ -66,13 +74,14 @@ class SimulationPlatform:
     def _initialize_agents(self):
         for i in range(self.N):
             position = np.array([random.uniform(0, 50) for _ in range(self.dimension)])
-            # 
+            # agent 1 ~ N-F を故障ロボットとしても一般性を失わない
             if i in range(self.N - self.F):
                 agent_type = AgentType.NOMAL
             else:
                 agent_type = AgentType.ADVERSAL
             self.agents.append(Agent(initial_position=position, agent_type=agent_type, F=self.F, dimension=self.dimension))
 
+    # 各Agent の位置を更新
     def _update_agents(self, cur_time):
         for i in range(self.N):
             other_agents_positions = []
@@ -99,9 +108,15 @@ class SimulationPlatform:
         nomal_agents_history = [agent.position_history for agent in self.agents if agent.agent_type == AgentType.NOMAL]
         adversal_agents_history = [agent.position_history for agent in self.agents if agent.agent_type == AgentType.ADVERSAL]
 
-        visualizer(all_agents_history = all_agents_history, nomal_agents_history = nomal_agents_history, adversal_agents_history = adversal_agents_history, visible_graph = self.visible_graph)
+        visualizer(
+            all_agents_history = all_agents_history,
+            nomal_agents_history = nomal_agents_history,
+            adversal_agents_history = adversal_agents_history,
+            visible_graph = self.visible_graph,
+            show_arrow = False
+        )
 
-
+    # 全体の流れ
     def simulate(self, update_times):
         for t in range(update_times):
             self._update_agents(t)
@@ -114,5 +129,5 @@ class SimulationPlatform:
 
 if __name__ == "__main__":
     print("Simulating ... ")
-    simulation_platform = SimulationPlatform(dimension=2, N=10, F=1, epsilon=10**(-3))
+    simulation_platform = SimulationPlatform(dimension=2, N=10, F=2, epsilon=10**(-3))
     simulation_platform.simulate(update_times=100)

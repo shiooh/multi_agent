@@ -2,7 +2,10 @@ import random
 import networkx as nx
 import numpy as np
 
+## NOTE: 自身のノードは含まないグラフの, 隣接リストを作成する helper 関数
+
 def generate_random_strongly_connected_graph(n_vertices, n_edges):
+    ## TODO: 未完成
 
     G = nx.DiGraph()
     G.add_nodes_from(range(n_vertices))

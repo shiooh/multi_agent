@@ -8,11 +8,13 @@ import matplotlib.pyplot as plt
 import matplotlib.animation as animation
 from matplotlib.patches import FancyArrowPatch
 
-def visualizer(all_agents_history, nomal_agents_history, adversal_agents_history, visible_graph):
-    print("Visualizing ...")
+def visualizer(all_agents_history, nomal_agents_history, adversal_agents_history, visible_graph, show_arrow=True):
     ## all_agents_history : N × update_times × dimension
     ## nomal_agents_history : N-F × update_times × dimension
     ## adversal_agents_history : F × update_times × dimension
+
+    print("Visualizing ...")
+
     N = len(all_agents_history)
     update_times = len(all_agents_history[0])
     fig, ax = plt.subplots(figsize=(7, 7))
@@ -23,19 +25,20 @@ def visualizer(all_agents_history, nomal_agents_history, adversal_agents_history
     edge_indices = [(i, j) for i in range(N) for j in visible_graph[i]]
     
     # 矢印のビジュアル設定
-    arrow_patches = [
-        FancyArrowPatch(
-            (0, 0), (0, 0),
-            arrowstyle='-|>',
-            mutation_scale=25,
-            linewidth=1.6,
-            color='gray',
-            alpha=0.45,
-        )
-        for _ in edge_indices
-    ]
-    for patch in arrow_patches:
-        ax.add_patch(patch)
+    if(show_arrow):
+        arrow_patches = [
+            FancyArrowPatch(
+                (0, 0), (0, 0),
+                arrowstyle='-|>',
+                mutation_scale=25,
+                linewidth=1.6,
+                color='gray',
+                alpha=0.45,
+            )
+            for _ in edge_indices
+        ]
+        for patch in arrow_patches:
+            ax.add_patch(patch)
 
     # Agent番号のラベルづけの設定
     text_labels = []
@@ -117,13 +120,18 @@ def visualizer(all_agents_history, nomal_agents_history, adversal_agents_history
             label.set_text(label_text)
 
         # 有向辺をプロット
-        for patch, (i, j) in zip(arrow_patches, edge_indices):
-            start_pos = all_agents_history[j][t]
-            end_pos = all_agents_history[i][t]
-            patch.set_positions((start_pos[0], start_pos[1]), (end_pos[0], end_pos[1]))
+        if(show_arrow):
+            for patch, (i, j) in zip(arrow_patches, edge_indices):
+                start_pos = all_agents_history[j][t]
+                end_pos = all_agents_history[i][t]
+                patch.set_positions((start_pos[0], start_pos[1]), (end_pos[0], end_pos[1]))
+
+        # 現在時刻を表示
         time_text.set_text(f'Time: {t}')
 
-        return scat_nomal, scat_adversal, *arrow_patches, leg, time_text, *text_labels
+        if(show_arrow):
+            return scat_nomal, scat_adversal, *arrow_patches, leg, time_text, *text_labels
+        return scat_nomal, scat_adversal, leg, time_text, *text_labels
 
 
     # 全時刻のプロットを集めてアニメーションにする
