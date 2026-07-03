@@ -28,16 +28,15 @@ class Agent:
     def _move_as_nomal(self, other_agents_positions):
 
         # ver1 ~ ver3
-        # next_position = update_by_turkey_hyperplane(
-        #     self_position = self.position_history[-1],
-        #     other_agents_positions = other_agents_positions,
-        #     cur_time = self.cur_time,
-        #     F = self.F,
-        #     dimension = self.dimension,
-        #     find_best_nomal = True,     # ver1: False, ver2~ : True
-        #     diminish_step_length = True     # ver1,2: False, ver3: True
-        # )
-
+        next_position = update_by_turkey_hyperplane(
+            self_position = self.position_history[-1],
+            other_agents_positions = other_agents_positions,
+            cur_time = self.cur_time,
+            F = self.F,
+            dimension = self.dimension,
+            find_best_nomal = True,     # ver1: False, ver2~ : True
+            diminish_step_length = True     # ver1,2: False, ver3: True
+        )
         
         self.position_history.append(next_position)
         
