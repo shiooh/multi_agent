@@ -4,65 +4,92 @@ import numpy as np
 
 ## NOTE: 自身のノードは含まないグラフの, 隣接リストを作成する helper 関数
 
-def generate_random_strongly_connected_graph(n_vertices, n_edges):
-    ## TODO: 未完成
+# 正常ノード nomal_agents_id, 故障ノード adversal_agents_id を頂点として 辺数 n_edges の(i), (ii) を満たすグラフをランダムに生成する
+# (i) 正常ノード i の近傍の数 N_i が N_i >= F_i * (dimension + 1)
+# (ii) 正常ノードの 接続グラフは repeatedly reachable
+def generate_random_graph_with_spanning_arborescence(nomal_agents_id, adversal_agents_id, n_edges, min_neighbour):
 
-    G = nx.DiGraph()
-    G.add_nodes_from(range(n_vertices))
-
-    # 有向サイクルをグラフに追加
-    arr = np.arange(n_vertices)
-    np.random.shuffle(arr)
-    G.add_cycle(arr)
-
-    # 残りの辺はランダムに追加
-    all_possible_edges = [(u, v) for u in range(n_vertices) for v in range(n_vertices) if u != v]
-    current_edges = set(G.edges())
-    candidate_edges = [edge for edge in all_possible_edges if edge not in current_edges]
-    choosen_edges = random.sample(candidate_edges, 3)
-    G.add_edges_from(choosen_edges)
-
-    # TODO: 一旦可視化、そのあと、強連結性を保証しながらランダムに入れ替える
-
-
-# 頂点数 n_vertices, 辺の数 n_edges の、全域有向木を含む有向グラフをランダムに生成 計算量: O(V^2)
-def generate_random_graph_with_spanning_arborescence(n_vertices, n_edges):
-    if n_edges < n_vertices - 1:
-        raise ValueError("|E| have to be more than (|V| - 1)")
-        
-    G = nx.DiGraph()
-    G.add_nodes_from(range(n_vertices))
+    adj_list = [[] for _ in nomal_agents_id + adversal_agents_id]
     
-    # 1. 骨組みとなる全域木を生成
-    for i in range(1, n_vertices):
-        parent = random.randint(0, i - 1)
-        G.add_edge(parent, i)
-        
-    # 2. ランダムな辺の肉付け
-    all_possible_edges = [(u, v) for u in range(n_vertices) for v in range(n_vertices) if u != v]
-    current_edges = set(G.edges())
-    candidate_edges = [edge for edge in all_possible_edges if edge not in current_edges]
-    random.shuffle(candidate_edges)
+    # 条件(ii)を満たす
+    generate_spanning_arborescence_of_nomal_agents(nomal_agents_id, adj_list)
+
+    # 条件(i)を満たす
+    candidate_edges = []
+    for i in nomal_agents_id:
+        if min_neighbour >= len(adj_list[i]):
+            not_adj_of_i = set(nomal_agents_id + adversal_agents_id)
+            not_adj_of_i.remove(i)
+            for j in adj_list[i]:
+                not_adj_of_i.remove(j)
+            chosen = random.sample(list(not_adj_of_i), min_neighbour - len(adj_list[i]))
+            adj_list[i].extend(chosen)
+            for j in chosen:
+                not_adj_of_i.remove(j)
+            candidate_edges.extend([(i, j) for j in list(not_adj_of_i)])
+            n_edges -= min_neighbour
+        else:
+            n_edges -= len(adj_list[i])
+
+    # 足りない辺の数を肉付け
+    if n_edges < 0:
+        print("Overed intended edge size")
+    elif n_edges > 0:
+        if n_edges <= len(candidate_edges):
+            random.sample(candidate_edges, n_edges)
+        else:
+            print("Intended edge size is too much")
+
+    # print_graph(adj_list)
+
+    return adj_list
+
+def generate_spanning_arborescence_of_nomal_agents(nomal_agents_id, adj_list):
+
+    parents = [0] * len(nomal_agents_id)
+    parents_size = 0
+    children = nomal_agents_id.copy()
+    children_size = len(nomal_agents_id)
+
+    def pop_from_children():
+        nonlocal children, children_size
+        random_id = random.randint(0, children_size-1)
+        chosen = children[random_id]
+        children[children_size-1], children[random_id] = children[random_id], children[children_size-1]
+        children_size -= 1
+        return chosen
+    def add_to_parents(added):
+        nonlocal parents, parents_size
+        parents[parents_size] = added
+        parents_size += 1
+
+    random_parent = pop_from_children()
+    add_to_parents(random_parent)
+    for i in range(len(nomal_agents_id)-1):
+        random_child = pop_from_children()
+        random_parent = parents[random.randint(0, parents_size-1)]
+        adj_list[random_parent].append(random_child)
+        add_to_parents(random_child)
     
-    edges_to_add = n_edges - (n_vertices - 1)
-    for _ in range(min(edges_to_add, len(candidate_edges))):
-        G.add_edge(*candidate_edges.pop())
-        
-    # 3. シャッフル
-    mapping = list(range(n_vertices))
-    random.shuffle(mapping)
-    mapping_dict = {i: mapping[i] for i in range(n_vertices)}
-    final_graph = nx.relabel_nodes(G, mapping_dict)
-    
-    adj_dict = nx.to_dict_of_lists(final_graph)
-    
-    return adj_dict
 
 # 頂点数 n_vertices の完全グラフを生成
-def generate_complite_graph(n_vertices):
-    visible_graph =  [[] for _ in range(n_vertices)]
-    for i in range(n_vertices):
-        for j in range(n_vertices):
+def generate_complite_graph(nomal_agents_id, adversal_agents_id):
+    visible_graph =  [[] for _ in (nomal_agents_id + adversal_agents_id)]
+    for i in (nomal_agents_id + adversal_agents_id):
+        for j in (nomal_agents_id + adversal_agents_id):
             if i is not j:
                 visible_graph[i].append(j)
     return visible_graph
+
+
+import matplotlib
+matplotlib.use('Agg')
+import matplotlib.pyplot as plt
+
+def print_graph(adj_list):
+    adj_dict = {i: neighbors for i, neighbors in enumerate(adj_list)}
+
+    G = nx.from_dict_of_lists(adj_dict)
+    plt.figure(figsize=(8, 6))
+    nx.draw(G, with_labels=True, node_color='lightblue', font_weight='bold')
+    plt.savefig("out/network_graph.png", format="PNG", dpi=300)
