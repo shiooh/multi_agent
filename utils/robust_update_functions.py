@@ -6,7 +6,7 @@ from depth.model.DepthEucl import DepthEucl
 #-----------------------   Center Point Algorism ----------------------- #
 #
 
-def go_to_center_point(weight, self_position, other_agents_positions, F):
+def update_by_center_point(weight, self_position, other_agents_positions, F, dimension):
     # TODO: もっといいアルゴリズムに
     other_agents_positions = np.array(other_agents_positions)
 
@@ -14,6 +14,9 @@ def go_to_center_point(weight, self_position, other_agents_positions, F):
     depths = model.halfspace(other_agents_positions, exact=True)
 
     center_idx = depths.argmax()
+    if depths[center_idx] < len(other_agents_positions) / (dimension+1):
+        raise ValueError("Not found center point") 
+
     centerpoint = other_agents_positions[center_idx]
 
     return weight * self_position + (1 - weight) * centerpoint.copy()
@@ -23,6 +26,7 @@ def go_to_center_point(weight, self_position, other_agents_positions, F):
 #
 
 def update_by_turkey_hyperplane(self_position, other_agents_positions, cur_time, F, dimension, find_best, diminish_step_length = False):
+    # TODO: 100通りランダムに試すんじゃなくて, N 通りの真ん中を調べると O(N)
     if find_best:
         nomal_vector = best_nomal_of_hyperplane(
             self_position = self_position,
