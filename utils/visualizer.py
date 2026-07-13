@@ -5,7 +5,32 @@ import matplotlib
 matplotlib.use('Agg')
 import matplotlib.pyplot as plt
 import matplotlib.animation as animation
-from matplotlib.patches import FancyArrowPatch
+from matplotlib.patches import FancyArrowPatch, Polygon
+
+
+def _convex_hull(points):
+    points = np.unique(np.asarray(points, dtype=float), axis=0)
+    if len(points) <= 2:
+        return points
+
+    ordered = sorted(points.tolist())
+
+    def cross(origin, a, b):
+        return (a[0] - origin[0]) * (b[1] - origin[1]) - (a[1] - origin[1]) * (b[0] - origin[0])
+
+    lower = []
+    for point in ordered:
+        while len(lower) >= 2 and cross(lower[-2], lower[-1], point) <= 0:
+            lower.pop()
+        lower.append(point)
+
+    upper = []
+    for point in reversed(ordered):
+        while len(upper) >= 2 and cross(upper[-2], upper[-1], point) <= 0:
+            upper.pop()
+        upper.append(point)
+
+    return np.array(lower[:-1] + upper[:-1], dtype=float)
 
 def visualizer(all_agents_history, nomal_agents_history, adversal_agents_history, visible_graph, show_arrow=True):
     print("Visualizing ...")
@@ -23,6 +48,39 @@ def visualizer(all_agents_history, nomal_agents_history, adversal_agents_history
     scat_nomal = ax.scatter([], [], c='blue', label='Nomal Agents', s=70)
     scat_adversal = ax.scatter([], [], c='red', label='Adversal Agents', s=70)
     edge_indices = [(i, j) for i in range(N) for j in visible_graph[i]]
+
+    initial_normal_positions = normal_history[:, 0, :]
+    convex_hull = _convex_hull(initial_normal_positions)
+    hull_artist = None
+    if len(convex_hull) >= 3:
+        hull_artist = Polygon(
+            convex_hull,
+            closed=True,
+            facecolor='gold',
+            edgecolor='orange',
+            alpha=0.12,
+            linewidth=1.5,
+            zorder=0,
+        )
+        ax.add_patch(hull_artist)
+    elif len(convex_hull) == 2:
+        hull_artist, = ax.plot(
+            convex_hull[:, 0],
+            convex_hull[:, 1],
+            color='orange',
+            alpha=0.25,
+            linewidth=2.0,
+            zorder=0,
+        )
+    elif len(convex_hull) == 1:
+        hull_artist = ax.scatter(
+            convex_hull[:, 0],
+            convex_hull[:, 1],
+            color='orange',
+            alpha=0.35,
+            s=90,
+            zorder=0,
+        )
     
     # 矢印のビジュアル設定
     if show_arrow:
@@ -123,10 +181,13 @@ def visualizer(all_agents_history, nomal_agents_history, adversal_agents_history
         # 現在時刻を表示
         time_text.set_text(f'Time: {t}')
 
+        artists = [scat_nomal, scat_adversal, leg, time_text, *text_labels]
         if show_arrow:
-            return scat_nomal, scat_adversal, *arrow_patches, leg, time_text, *text_labels
+            artists.extend(arrow_patches)
+        if hull_artist is not None:
+            artists.append(hull_artist)
 
-        return scat_nomal, scat_adversal, leg, time_text, *text_labels
+        return tuple(artists)
 
     # 全時刻のプロットを集めてアニメーションにする
     os.makedirs('out', exist_ok=True)

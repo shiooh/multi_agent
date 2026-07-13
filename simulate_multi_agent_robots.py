@@ -24,22 +24,24 @@ class Agent:
 
     def _move_as_nomal(self, other_agents_positions):
 
-        # ver1 ~ ver3
-        # next_position = update_by_turkey_hyperplane(
+        ## Tukey's Hyperplane に基づく更新
+        # next_position = update_by_tukeys_hyperplane(
         #     self_position = self.position_history[-1],
         #     other_agents_positions = other_agents_positions,
         #     cur_time = self.cur_time,
         #     F = self.F,
         #     dimension = self.dimension,
         #     find_best = True,     # ver1: False, ver2~ : True
-        #     diminish_step_length = True     # ver1,2: False, ver3: True
+        #     diminish_step_length = True    # ver1,2: False, ver3: True
         # )
 
-        next_position = go_to_center_point(
+        # Centerpoint に基づく更新
+        next_position = update_by_center_point(
             weight = 0.7,
             self_position = self.position_history[-1],
             other_agents_positions = other_agents_positions,
             F = self.F,
+            dimension = self.dimension
         )
         
         self.position_history.append(next_position)
@@ -56,11 +58,12 @@ class Agent:
 
 
 class SimulationPlatform:
-    def __init__(self, dimension, N, F, epsilon):
+    def __init__(self, dimension, N, F, epsilon, max_delay=0):
         self.dimension = dimension
         self.N = N
         self.F = F
         self.epsilon = epsilon
+        self.max_delay = max_delay
         self.agents = []
         self._initialize_agents()
         self.visible_graph = [[] for _ in range(N)]
@@ -68,9 +71,15 @@ class SimulationPlatform:
 
     # 可視グラフをランダムに生成
     def _initialize_visible_graph(self):
-        self.visible_graph = generate_complite_graph(self.N)
+        nomal_agents_id = [i for i in range(self.N) if self.agents[i].agent_type == AgentType.NOMAL]
+        adversal_agents_id = [i for i in range(self.N) if self.agents[i].agent_type == AgentType.ADVERSAL]
+        ## 完全グラフ
+        # self.visible_graph = generate_complite_graph(nomal_agents_id, adversal_agents_id)
 
-        # Agent の位置をランダムに決定
+        ## Safe Point アルゴリズムの条件を満たすグラフ
+        self.visible_graph = generate_random_graph_with_spanning_arborescence(nomal_agents_id, adversal_agents_id, 100, self.F*(self.dimension+1))
+
+    # Agent の位置をランダムに決定
     def _initialize_agents(self):
         for i in range(self.N):
             position = np.array([random.uniform(0, 50) for _ in range(self.dimension)])
@@ -86,7 +95,8 @@ class SimulationPlatform:
         for i in range(self.N):
             other_agents_positions = []
             for j in self.visible_graph[i]:
-                other_agents_positions.append(self.agents[j].position_history[cur_time])
+                delay = random.randint(0, min(self.max_delay, cur_time))
+                other_agents_positions.append(self.agents[j].position_history[cur_time - delay])
             self.agents[i].update_position(other_agents_positions)
 
     # agents が合意に達しているか評価
@@ -101,7 +111,7 @@ class SimulationPlatform:
         return True
 
     # agents の移動の様子を可視化. 2次元にのみ対応している
-    def _visualize(self, update_times):
+    def _visualize(self):
         if self.dimension != 2:
             raise ValueError("Dimension has to be 2 to visualize")
         all_agents_history = [agent.position_history for agent in self.agents]
@@ -119,15 +129,17 @@ class SimulationPlatform:
     # 全体の流れ
     def simulate(self, update_times):
         for t in range(update_times):
+            print("Update time: ", t)
             self._update_agents(t)
             if self._has_got_agreement():
                 print("Acheaved agreement!")
                 break
         
-        self._visualize(update_times)
+        self._visualize()
+        pass
 
 
 if __name__ == "__main__":
     print("Simulating ... ")
-    simulation_platform = SimulationPlatform(dimension=2, N=10, F=2, epsilon=10**(-3))
-    simulation_platform.simulate(update_times=100)
+    simulation_platform = SimulationPlatform(dimension=2, N=15, F=1, epsilon=10**(-3), max_delay=5)
+    simulation_platform.simulate(update_times=500)
