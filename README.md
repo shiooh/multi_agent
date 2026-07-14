@@ -6,7 +6,6 @@
 結果：
 
 https://github.com/user-attachments/assets/39b1942d-f44e-4b56-b588-fc6c960b63dc
-<video src="out/centerpoint_1.mp4" controls="true" width="300"></video>
 
 （有向木を含み, 各ロボットの近傍の数が $N_i \leq (F_i+1)(d+1)$ を満たすグラフ）
 
@@ -17,7 +16,6 @@ https://github.com/user-attachments/assets/39b1942d-f44e-4b56-b588-fc6c960b63dc
 結果：
 
 https://github.com/user-attachments/assets/db12af38-7902-45c7-96fc-9f9a31b5ace7
-<video src="out/visualizer_ver1.mp4" controls="true" width="300"></video>
 
 （完全グラフ）
 
@@ -26,7 +24,6 @@ https://github.com/user-attachments/assets/db12af38-7902-45c7-96fc-9f9a31b5ace7
 結果：
 
 https://github.com/user-attachments/assets/d8cbf299-ea22-4c85-9fb0-5a71f3f8b0ea
-<video src="out/visualizer_ver2.mp4" controls="true" width="300"></video>
 
 （完全グラフ）
 
@@ -35,7 +32,6 @@ https://github.com/user-attachments/assets/d8cbf299-ea22-4c85-9fb0-5a71f3f8b0ea
 結果：
 
 https://github.com/user-attachments/assets/69aaa6d2-aedd-4e1e-844c-045255bb65a8
-<video src="out/visualizer_ver3.mp4" controls="true" width="300"></video>
 
 （完全グラフ）
 
