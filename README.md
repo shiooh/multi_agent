@@ -7,7 +7,15 @@
 
 https://github.com/user-attachments/assets/39b1942d-f44e-4b56-b588-fc6c960b63dc
 
+（完全グラフ）
+
+https://github.com/user-attachments/assets/6ad01706-c0d8-47d0-b1f2-b4931830e4b9
+
 （有向木を含み, 各ロボットの近傍の数が $N_i \leq (F_i+1)(d+1)$ を満たすグラフ）
+
+https://github.com/user-attachments/assets/c85875f8-f231-46f6-9341-a6649c5a212f
+
+（遅延あり）
 
 ## Tukey's Hyperplane
 
