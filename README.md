@@ -1,5 +1,14 @@
 # Multi Agent の更新アルゴリズムのシミュレーション
 
+## 実行方法
+
+```bash
+python simulate_multi_agent_robots.py
+```
+現在のままでは Safe Point 法のシミュレーションがされるが, "simulate_multi_agent_robots.py" の 39-45 行目をコメントアウトし, 28-36 行目をアンコメントすると Tukey's Hyperplane 法をシミュレーションできる.
+
+また, そのほかの詳細な設定も"simulate_multi_agent_robots.py"上で設定できる.
+
 ## Center point
 - 近傍の点の集合と、それらのランダムな凸結合点複数個に対し. 各点のTukey深度を計算し, 最も深い点に移動する. 
 
